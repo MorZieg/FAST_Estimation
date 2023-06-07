@@ -1,10 +1,10 @@
-# FAST Estimation v1.0 - GPLv3
+# FAST Estimation v1.1 - GPLv3
 # Moritz O. Ziegler, mziegler@gfz-potsdam.de
 # Manual:   https://doi.org/10.48440/wsm.2023.001
 # Download: https://github.com/MorZieg/FAST_Estimation
 ###############################################################################################
 #
-# Python Fast Automatic Stress Tensor Estimation v1.0 is a Python 3 tool of the FAST suite.
+# Python Fast Automatic Stress Tensor Estimation v1.1 is a Python 3 tool of the FAST suite.
 # It supports Moose and Abaqus solver, PyTecplot, GeoStress and GeoStressCmd
 # (https://doi.org/10.5880/wsm.2020.001), and runs on Windows and Linux
 # systems. It can be run as stand-alone script or called from another script.
@@ -38,10 +38,10 @@ pytecplot = 'on' # 'off'
 stress_vars = ['SHmax','Shmin','Sv']
 
 #  The name of the test file with three boundary condition scenarios.
-name = 'test_calibration'
+name = 'test_scenarios'
 
 #  The current folder.
-folder = 'C:\\Users\\mziegler\\Documents\\Software\\FAST_Estimation'
+folder = 'C:\\Users\\Documents\\Software\\FAST_Estimation'
 
 #  The test boundary conditions.
 bcs = [[4, -4],[2, -5],[4, -3]]
@@ -55,9 +55,13 @@ bc_eval = [[ -4.4, 2],[-6, 4.1]]
 loc = [[3500, 3500, -2900],[8000, 7000, -900]]
 
 ###############################################################################################
-def main(loc,bc_eval,stress_vars,name,solver,pytecplot):
+def main(loc,bc_eval,stress_vars,bcs,name,solver,pytecplot):
+  import os.path
   import numpy as np
   import tecplot
+
+  print('Running FAST Estimation v1.1')
+  
   # Load locations if specified in file.
   if type(loc) == str:
     loc = load_loc(loc)
@@ -70,11 +74,14 @@ def main(loc,bc_eval,stress_vars,name,solver,pytecplot):
   if pytecplot == 'on':
     print('Running PyTecplot Version '+tecplot.__version__)
     # Load files if PyTecplot is used
-    if solver == 'abaqus':
-      load_abq(name)
-    elif solver == 'moose':
-      load_mse(name)
-
+    if not os.path.exists((name+'.plt')):
+      if solver == 'abaqus':
+        load_abq(name)
+      elif solver == 'moose':
+        load_mse(name)
+    else:
+      print('Using existing *.plt file')
+      
     moss = extract_tp(name,solver,loc,stress_vars)
 
   elif pytecplot == 'off':
@@ -165,7 +172,8 @@ def load_abq(name):
   # (and syntax) required depending on operating system.
   import tecplot as tp
   import platform
-  
+
+  print('Loading *.odb file')
   if platform.system() == 'Linux':
     tp.macro.execute_command("""$!ReadDataSet  '\"StandardSyntax\" \"1.0\" \"FEALoaderVersion\" \"446\" \"FILENAME_File\" \"%s.fil\" \"AutoAssignStrandIDs\" \"Yes\"'\n"""
     """  DataSetReader = 'ABAQUS .fil Data (FEA)'""" % name)
@@ -185,7 +193,8 @@ def load_mse(name):
   # Only required in PyTecplot is used.
   # Load Moose output files consecutively and save as *.plt file.
   import tecplot as tp
-  
+
+  print('Loading Moose output file')
   # Load first solver output file.
   tp.macro.execute_command("""$!ReadDataSet  '\"%s_0001.dat\" '
     ReadDataOption = New
@@ -463,8 +472,7 @@ def write_output(es,stress_vars):
 ###############################################################################################
 ###############################################################################################
 if __name__ == '__main__':
-  print('Running FAST Estimation v1.0')
-  es = main(loc,bc_eval,stress_vars,name,solver,pytecplot)
+  es = main(loc,bc_eval,stress_vars,bcs,name,solver,pytecplot)
   
   # If the function is run as a stand-alone script the number of estimated stress states are
   # printed to the screen and a results file is written.
