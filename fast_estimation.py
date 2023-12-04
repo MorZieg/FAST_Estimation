@@ -428,7 +428,7 @@ def stress_rotation(temp,stress_vars):
 
   if stress_vars[0] == 'SHmax' and stress_vars[1] == 'Shmin':
     for i in range(1,len(temp)):
-      if temp[i][0] > temp[i][1]:
+      if temp[i][0] < temp[i][1]:
         shazi = shazi + 1
         
     if shazi == 0:
