@@ -31,7 +31,7 @@
 
 #  User input:
 solver = 'abaqus' # 'moose'
-pytecplot = 'on' # 'off'
+pytecplot = 'off' # 'off'
 
 #  The stress components that should be estimated
 #stress_vars = ['XX Stress','YY Stress','ZZ Stress','XY Stress','YZ Stress','ZX Stress']
@@ -60,7 +60,7 @@ def main(loc,bc_eval,stress_vars,bcs,name,solver,pytecplot):
   import numpy as np
   import tecplot
 
-  print('Running FAST Estimation v1.1')
+  check(bcs)
   
   # Load locations if specified in file.
   if type(loc) == str:
@@ -470,8 +470,23 @@ def write_output(es,stress_vars):
   fid.close()
 
 ###############################################################################################
+def check(bcs):
+  # Check whether the test boundary conditions have the same sign.
+  import numpy as np
+  
+  if ~(np.sign(bcs[0][0]) == np.sign(bcs[1][0]) == np.sign(bcs[2][0])):
+    print('ERROR! The signs in the test boundary conditions boundary condition in x direction are mismatching. This can lead to undesired behaviour of FAST.')
+    print('')
+  
+  if ~(np.sign(bcs[0][1]) == np.sign(bcs[1][1]) == np.sign(bcs[2][1])):
+    print('ERROR! The signs in the test boundary conditions boundary condition in y direction are mismatching. This can lead to undesired behaviour of FAST.')
+    print('')
+
+###############################################################################################
 ###############################################################################################
 if __name__ == '__main__':
+  print('Running FAST Estimation v1.1.1')
+  
   es = main(loc,bc_eval,stress_vars,bcs,name,solver,pytecplot)
   
   # If the function is run as a stand-alone script the number of estimated stress states are
