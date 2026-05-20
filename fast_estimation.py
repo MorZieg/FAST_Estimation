@@ -1,10 +1,10 @@
-# FAST Estimation v1.1 - GPLv3
-# Moritz O. Ziegler, mziegler@gfz-potsdam.de
+# FAST Estimation v1.1.2 - GPLv3
+# Moritz O. Ziegler, moritz.ziegler@tum.de
 # Manual:   https://doi.org/10.48440/wsm.2023.001
 # Download: https://github.com/MorZieg/FAST_Estimation
 ###############################################################################################
 #
-# Python Fast Automatic Stress Tensor Estimation v1.1 is a Python 3 tool of the FAST suite.
+# Python Fast Automatic Stress Tensor Estimation v1.1.2 is a Python 3 tool of the FAST suite.
 # It supports Moose and Abaqus solver, PyTecplot, GeoStress and GeoStressCmd
 # (https://doi.org/10.5880/wsm.2020.001), and runs on Windows and Linux
 # systems. It can be run as stand-alone script or called from another script.
@@ -74,7 +74,7 @@ def main(loc,bc_eval,stress_vars,bcs,name,solver,pytecplot):
   if pytecplot == 'on':
     print('Running PyTecplot Version '+tecplot.__version__)
     # Load files if PyTecplot is used
-    if not os.path.exists((name+'.plt')):
+    if not os.path.exists(name+'.plt'):
       if solver == 'abaqus':
         load_abq(name)
       elif solver == 'moose':
@@ -231,7 +231,10 @@ def extract_tp(name,solver,loc,stress_vars):
   import numpy as np
   import platform
   
-  model = tp.data.load_tecplot('%s.plt' % name)
+  if name.endswith('.plt'):
+    model = tp.data.load_tecplot(name)
+  else:
+    model = tp.data.load_tecplot('%s.plt' % name)    
   
   if platform.system() == 'Linux' and solver == 'abaqus':
     # Convert the cell centered stress tensor variables from the *.fil file to nodal variables.
@@ -243,10 +246,14 @@ def extract_tp(name,solver,loc,stress_vars):
      
   # Run GeoStressCmd if a reduced stress tensor is desired.
   if stress_vars[0] == 'SHmax' or stress_vars[0] == 'Shmin':
-    print ('Running GeoStressCmd...')
-    CommandString = 'Stress, 90.0, 0.0, 0.0, 0.0, -1.0E-6, 0, 0, 0, 0, 0, 1, 0, 0, 0'
-    tp.macro.execute_extended_command("GeoStressCmd",CommandString)
-    print ('Sucessfull!')
+    sxc = "SHmax" in model.variable_names
+    snc = "Shmin" in model.variable_names
+ 
+    if not (sxc and snc):
+        print ('Running GeoStressCmd...')
+        CommandString = 'Stress, 90.0, 0.0, 0.0, 0.0, -1.0E-6, 0, 0, 0, 0, 0, 1, 0, 0, 0'
+        tp.macro.execute_extended_command("GeoStressCmd",CommandString)
+        print ('Sucessfull!')
   
   # Extract the variables at the acording locations.
   moss = []
